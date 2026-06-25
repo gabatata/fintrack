@@ -220,9 +220,11 @@ def get_category_summary(month: str | None = None) -> list[dict]:
         return [dict(r) for r in rows]
 
 def get_pending_review_count() -> int:
+    # Conta so o que e revisavel na lista (creditos/pagamentos nao aparecem la).
     with db_session() as conn:
         return conn.execute(
-            "SELECT COUNT(*) FROM transactions WHERE review_status = 'pending'"
+            "SELECT COUNT(*) FROM transactions "
+            "WHERE review_status = 'pending' AND tx_type != 'credit'"
         ).fetchone()[0]
 
 
