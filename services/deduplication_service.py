@@ -62,8 +62,8 @@ def find_duplicates(candidates: list[dict], import_id: int | None = None) -> lis
                   AND description_norm = ?
                   AND account_label = ?
                   AND (
-                    :import_id IS NULL
-                    OR import_id != :import_id
+                    ? IS NULL
+                    OR import_id != ?
                   )
                 LIMIT 1
                 """,
@@ -72,6 +72,7 @@ def find_duplicates(candidates: list[dict], import_id: int | None = None) -> lis
                     tx.get("amount", 0),
                     tx.get("description_norm", tx.get("description_raw", "")),
                     tx.get("account_label", ""),
+                    import_id,
                     import_id,
                 ),
             ).fetchone()
