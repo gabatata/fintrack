@@ -138,9 +138,15 @@ class BradescoParser(BaseParser):
                 continue
 
             date_raw, rest = m.group(1), m.group(2)
-            am = AMOUNT_FIRST.search(rest)
-            if not am:
+
+            # Compra internacional traz varios numeros na linha:
+            #   <valor moeda estrangeira> <valor> <cotacao> <valor em R$>
+            # O valor cobrado e o ULTIMO (R$); na compra normal, o primeiro.
+            is_foreign = bool(re.search(r"US\$|\bUSD\b|\bEUR\b|\bGBP\b", rest, re.I))
+            matches = list(AMOUNT_FIRST.finditer(rest))
+            if not matches:
                 continue
+            am = matches[-1] if is_foreign else matches[0]
 
             amount = parse_amount(am.group(1))
             if not amount:
@@ -148,6 +154,10 @@ class BradescoParser(BaseParser):
             is_neg = bool(am.group(2))
 
             desc_raw = rest[:am.start()].strip()
+            if is_foreign:
+                # remove o trecho da conversao (a partir de "USD"/"US$") da descricao
+                desc_raw = re.split(r"\s*(?:US\$|USD|EUR|GBP)\b", desc_raw,
+                                    maxsplit=1, flags=re.I)[0].strip()
             desc_raw = CITY_NOISE.sub("", desc_raw).strip()
             desc_raw = re.sub(r"\s+BRA\s*$", "", desc_raw).strip()
 
