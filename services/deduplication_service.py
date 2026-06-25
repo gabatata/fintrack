@@ -52,15 +52,19 @@ def find_duplicates(candidates: list[dict], import_id: int | None = None) -> lis
             )
             tx["_fingerprint"] = fp
 
-            # Busca lancamento identico em UM IMPORT DIFERENTE do atual
-            # (se import_id for None, busca em todos)
+            # Busca lancamento equivalente em UM IMPORT DIFERENTE do atual.
+            # Compara por DATA + VALOR + CARTAO + PARCELA, ignorando o texto do
+            # nome -- porque o mesmo lancamento aparece com descricao diferente
+            # entre formatos (extrato em aberto vs fatura fechada). A parcela no
+            # criterio evita unir parcelas distintas (ex: 5/21 vs 6/21).
             existing = conn.execute(
                 """
                 SELECT id FROM transactions
                 WHERE tx_date = ?
                   AND ABS(amount - ?) < 0.01
-                  AND description_norm = ?
                   AND account_label = ?
+                  AND COALESCE(installment_current, -1) = COALESCE(?, -1)
+                  AND COALESCE(installment_total,   -1) = COALESCE(?, -1)
                   AND (
                     ? IS NULL
                     OR import_id != ?
@@ -70,8 +74,9 @@ def find_duplicates(candidates: list[dict], import_id: int | None = None) -> lis
                 (
                     tx.get("tx_date", ""),
                     tx.get("amount", 0),
-                    tx.get("description_norm", tx.get("description_raw", "")),
                     tx.get("account_label", ""),
+                    tx.get("installment_current"),
+                    tx.get("installment_total"),
                     import_id,
                     import_id,
                 ),
