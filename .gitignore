@@ -26,3 +26,5 @@ Thumbs.db
 
 # Config de ferramentas locais
 .claude/
+data/seed_supabase/
+data/**/*.db
