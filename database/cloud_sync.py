@@ -41,8 +41,29 @@ def _object_url(url: str, bucket: str, obj: str) -> str:
     return f"{url}/storage/v1/object/{bucket}/{obj}"
 
 
+# Trava de seguranca: so permitimos SUBIR o banco depois de confirmar o estado
+# da nuvem na descida (download OK, ou 404 = nuvem legitimamente vazia). Se a
+# descida FALHAR (rede/credencial), uploads ficam bloqueados para nunca
+# sobrescrever a nuvem com um banco que nao representa o estado real.
+_download_ok = False
+
+
+def _local_tx_count(db_path: Path) -> int:
+    """Conta transacoes no banco local (para nao subir banco vazio)."""
+    try:
+        import sqlite3
+        c = sqlite3.connect(str(db_path))
+        try:
+            return c.execute("SELECT COUNT(*) FROM transactions").fetchone()[0]
+        finally:
+            c.close()
+    except Exception:
+        return -1  # em duvida, nao bloqueia por contagem
+
+
 def download_db(db_path: Path) -> bool:
     """Baixa o banco da nuvem para db_path. Retorna True se baixou."""
+    global _download_ok
     cfg = _cfg()
     if not cfg:
         return False
@@ -57,9 +78,11 @@ def download_db(db_path: Path) -> bool:
         if r.status_code == 200 and r.content:
             db_path.parent.mkdir(parents=True, exist_ok=True)
             db_path.write_bytes(r.content)
+            _download_ok = True
             log.info(f"Banco baixado da nuvem ({len(r.content)} bytes).")
             return True
         if r.status_code == 404:
+            _download_ok = True  # nuvem vazia de verdade: seguro subir depois
             log.info("Sem banco na nuvem ainda; sera criado no primeiro uso.")
         else:
             log.warning(f"Download do banco falhou: HTTP {r.status_code} {r.text[:150]}")
@@ -73,6 +96,18 @@ def upload_db(db_path: Path) -> bool:
     cfg = _cfg()
     if not cfg or not db_path.exists():
         return False
+
+    # Protecao 1: nunca subir se nao confirmamos o estado da nuvem na descida.
+    if not _download_ok:
+        log.warning("Upload BLOQUEADO: download da nuvem nao confirmado nesta "
+                    "sessao (evita sobrescrever dados da nuvem).")
+        return False
+    # Protecao 2: nunca subir um banco SEM transacoes por cima da nuvem.
+    if _local_tx_count(db_path) == 0:
+        log.warning("Upload BLOQUEADO: banco local sem transacoes "
+                    "(evita zerar a nuvem).")
+        return False
+
     url, key, bucket, obj = cfg
     try:
         import requests
