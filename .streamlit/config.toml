@@ -1,0 +1,22 @@
+[server]
+headless = true
+fileWatcherType = "auto"
+runOnSave = true
+maxUploadSize = 50
+# Nota: endereco/porta sao definidos por flag no run_local.bat (local) e
+# gerenciados pelo Streamlit Cloud (nuvem) — por isso nao ficam fixados aqui.
+
+[browser]
+gatherUsageStats = false
+serverAddress = "localhost"
+
+[client]
+showSidebarNavigation = false
+
+[theme]
+base = "dark"
+primaryColor = "#3B82F6"
+backgroundColor = "#0F172A"
+secondaryBackgroundColor = "#182235"
+textColor = "#F8FAFC"
+font = "sans serif"

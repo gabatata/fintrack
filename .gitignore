@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Banco de dados local + backups
+# (na nuvem o banco vive no Supabase Storage; localmente fica aqui mas NAO vai pro git)
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/backups/
+data/uploads/
+
+# Streamlit secrets — NUNCA versionar (contem a chave do Supabase)
+.streamlit/secrets.toml
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Logs / temporarios
+*.log
+
+# Config de ferramentas locais
+.claude/

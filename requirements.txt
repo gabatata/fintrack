@@ -1,0 +1,37 @@
+# FinTrack — dependências Python
+# Instale com: pip install -r requirements.txt
+
+# Interface
+streamlit>=1.35.0
+
+# Autenticacao (usados em auth.py)
+bcrypt>=4.0.0
+PyYAML>=6.0
+
+# Dados
+pandas>=2.1.0
+plotly>=5.18.0
+
+# PDF (extração de texto)
+pdfplumber>=0.10.3
+pypdf>=4.0.0
+
+# OCR
+pytesseract>=0.3.10
+Pillow>=10.0.0
+
+# OCR (renderização de PDF para imagem) — escolha UM:
+# Opção A (recomendada — sem dependência do poppler):
+PyMuPDF>=1.24.0
+
+# Opção B (alternativa, precisa do poppler instalado):
+# pdf2image>=1.16.3
+
+# Pré-processamento de imagem (opcional, melhora OCR)
+opencv-python-headless>=4.9.0
+
+# Utilitários
+python-dateutil>=2.8.2
+
+# Sincronizacao do banco com a nuvem (Supabase Storage) no deploy
+requests>=2.31.0
